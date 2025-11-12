@@ -3,320 +3,1000 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sleek Calculator</title>
+    <title>Advanced Calculator with Voice Input & History</title>
     <style>
-        body {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #1a1a1a, #333333);
-            margin: 0;
-            overflow: hidden; /* Hide potential scrollbars */
+            padding: 20px;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .calculator-container {
+            display: flex;
+            gap: 20px;
+            max-width: 800px;
+            width: 100%;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .calculator {
-            background: #2a2a2a;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 0 5px rgba(255, 255, 255, 0.05);
-            padding: 25px;
-            width: 320px;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 320px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideIn 0.5s ease-out;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) rotateX(45deg);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) rotateX(0);
+            }
+        }
+
+        .display {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 25px 20px;
+            text-align: right;
             position: relative;
             overflow: hidden;
         }
 
+        .display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #ff8a00, #e52e71, #667eea);
+            animation: rainbow 3s linear infinite;
+        }
+
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .previous-operand {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            min-height: 1.2rem;
+            margin-bottom: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .current-operand {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 300;
+            min-height: 3rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .current-operand.result-animation {
+            animation: resultBounce 0.5s ease;
+        }
+
+        @keyframes resultBounce {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+        }
+
+        button {
+            border: none;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-size: 1.3rem;
+            padding: 20px 10px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+            transform-style: preserve-3d;
+            perspective: 500px;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(2px) scale(0.98);
+            transition: transform 0.1s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .operator {
+            background: rgba(255, 107, 107, 0.3);
+        }
+
+        .operator:hover {
+            background: rgba(255, 107, 107, 0.5);
+        }
+
+        .equals {
+            background: rgba(72, 187, 120, 0.4);
+            grid-column: span 2;
+        }
+
+        .equals:hover {
+            background: rgba(72, 187, 120, 0.6);
+        }
+
+        .clear, .delete {
+            background: rgba(231, 76, 60, 0.3);
+        }
+
+        .clear:hover, .delete:hover {
+            background: rgba(231, 76, 60, 0.5);
+        }
+
+        .zero {
+            grid-column: span 2;
+        }
+
+        /* Ripple effect */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        }
+
+        @keyframes ripple {
+            to {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        /* Floating animation for the calculator */
+        .calculator {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        /* Glow effect on display */
         .display {
-            grid-column: span 4;
-            background: #1c1c1c;
-            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+
+        /* History Panel */
+        .history-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 320px;
             padding: 20px;
-            text-align: right;
-            margin-bottom: 15px;
-            color: #e0e0e0;
-            font-size: 2.8em;
-            overflow-x: auto;
-            white-space: nowrap;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             display: flex;
             flex-direction: column;
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .history-header {
+            display: flex;
             justify-content: space-between;
-            height: 120px;
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4);
-            animation: fadeInDisplay 0.8s ease-out;
+            align-items: center;
+            margin-bottom: 15px;
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
         }
 
-        .display .history {
-            font-size: 0.8em;
-            color: #999;
-            min-height: 1.2em; /* Ensure space for history */
+        .history-title {
+            font-size: 1.2rem;
+            font-weight: 600;
         }
 
-        .display .current-input {
-            font-size: 1.8em;
-            color: #e0e0e0;
-            font-weight: 500;
-        }
-
-
-        .button {
-            width: 65px;
-            height: 65px;
+        .clear-history {
+            background: rgba(231, 76, 60, 0.3);
+            color: white;
             border: none;
-            border-radius: 50%; /* Circular buttons */
-            font-size: 1.6em;
+            padding: 5px 10px;
+            border-radius: 10px;
             cursor: pointer;
-            background: #444;
-            color: #eee;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            transition: background 0.2s ease-out, transform 0.1s ease-out, box-shadow 0.2s ease-out;
-            outline: none;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .clear-history:hover {
+            background: rgba(231, 76, 60, 0.5);
+            transform: scale(1.05);
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 350px;
+            color: white;
+        }
+
+        .history-item {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .history-expression {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .history-result {
+            font-weight: bold;
+            color: white;
+            margin-top: 3px;
+        }
+
+        .empty-history {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            font-style: italic;
+        }
+
+        /* Theme toggle */
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
+            font-size: 1.5rem;
+            color: white;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            z-index: 10;
         }
 
-        .button:hover {
-            background: #555;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        .theme-toggle:hover {
+            transform: rotate(30deg) scale(1.1);
+            background: rgba(255, 255, 255, 0.3);
         }
 
-        .button:active {
-            transform: scale(0.95);
-            background: #333;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) inset;
-            color: #fff;
+        /* Dark theme */
+        .dark-theme {
+            background: linear-gradient(-45deg, #232526, #414345, #2c3e50, #34495e);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
         }
 
-        .button.operator {
-            background: #f39c12; /* Orange for operators */
-            color: #fff;
+        .dark-theme .calculator,
+        .dark-theme .history-panel {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .button.operator:hover {
-            background: #e67e22;
+        .dark-theme button {
+            background: rgba(0, 0, 0, 0.4);
+            color: #f0f0f0;
         }
 
-        .button.operator:active {
-            background: #d35400;
+        .dark-theme .operator {
+            background: rgba(155, 89, 182, 0.4);
         }
 
-        .button.clear {
-            background: #c0392b; /* Red for clear */
-            color: #fff;
-            grid-column: span 2; /* Make AC button wider */
-            border-radius: 35px; /* Pill shape for wider buttons */
-            width: 100%;
+        .dark-theme .equals {
+            background: rgba(46, 204, 113, 0.4);
         }
 
-        .button.clear:hover {
-            background: #e74c3c;
+        .dark-theme .clear, .dark-theme .delete {
+            background: rgba(231, 76, 60, 0.4);
         }
 
-        .button.clear:active {
-            background: #a5281d;
-        }
-
-        .button.equals {
-            background: #27ae60; /* Green for equals */
-            color: #fff;
-            grid-column: span 2; /* Make equals button wider */
-            border-radius: 35px; /* Pill shape for wider buttons */
-            width: 100%;
-        }
-
-        .button.equals:hover {
-            background: #2ecc71;
-        }
-
-        .button.equals:active {
-            background: #1e8449;
-        }
-
-        .button.zero {
+        /* Voice Input Button */
+        .voice-input {
+            background: rgba(52, 152, 219, 0.3);
             grid-column: span 2;
-            border-radius: 35px; /* Pill shape for 0 */
-            width: 100%;
         }
 
-        /* Keyframe animations */
-        @keyframes fadeInDisplay {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .voice-input:hover {
+            background: rgba(52, 152, 219, 0.5);
         }
 
-        @keyframes buttonPress {
-            0% { transform: scale(1); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); }
-            50% { transform: scale(0.95); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) inset; }
-            100% { transform: scale(1); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); }
+        .voice-input.listening {
+            background: rgba(231, 76, 60, 0.5);
+            animation: pulse 1.5s infinite;
         }
 
-        .button.pressed {
-            animation: buttonPress 0.2s ease-out;
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(231, 76, 60, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+            }
+        }
+
+        /* Voice status indicator */
+        .voice-status {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s ease;
+        }
+
+        .voice-status.listening {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .calculator-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .calculator, .history-panel {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .calculator {
+                max-width: 300px;
+            }
+            
+            button {
+                padding: 18px 8px;
+                font-size: 1.2rem;
+            }
+            
+            .current-operand {
+                font-size: 2.2rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="calculator">
-        <div class="display">
-            <div class="history" id="historyDisplay"></div>
-            <div class="current-input" id="currentDisplay">0</div>
+    <button class="theme-toggle" id="themeToggle">🌙</button>
+    
+    <div class="calculator-container">
+        <div class="calculator">
+            <div class="display">
+                <div class="voice-status" id="voiceStatus"></div>
+                <div class="previous-operand" id="previousOperand"></div>
+                <div class="current-operand" id="currentOperand">0</div>
+            </div>
+            <div class="buttons">
+                <button class="clear" data-action="clear">C</button>
+                <button class="delete" data-action="delete">⌫</button>
+                <button class="operator" data-action="divide">÷</button>
+                <button class="operator" data-action="multiply">×</button>
+                
+                <button data-number="7">7</button>
+                <button data-number="8">8</button>
+                <button data-number="9">9</button>
+                <button class="operator" data-action="subtract">−</button>
+                
+                <button data-number="4">4</button>
+                <button data-number="5">5</button>
+                <button data-number="6">6</button>
+                <button class="operator" data-action="add">+</button>
+                
+                <button data-number="1">1</button>
+                <button data-number="2">2</button>
+                <button data-number="3">3</button>
+                <button class="equals" data-action="equals" rowspan="2">=</button>
+                
+                <button data-number="0" class="zero">0</button>
+                <button data-action="decimal">.</button>
+                <button class="voice-input" id="voiceInput">🎤 Voice</button>
+            </div>
         </div>
 
-        <button class="button clear" data-value="clear">AC</button>
-        <button class="button operator" data-value="%">%</button>
-        <button class="button operator" data-value="/">&divide;</button>
-
-        <button class="button" data-value="7">7</button>
-        <button class="button" data-value="8">8</button>
-        <button class="button" data-value="9">9</button>
-        <button class="button operator" data-value="*">&times;</button>
-
-        <button class="button" data-value="4">4</button>
-        <button class="button" data-value="5">5</button>
-        <button class="button" data-value="6">6</button>
-        <button class="button operator" data-value="-">-</button>
-
-        <button class="button" data-value="1">1</button>
-        <button class="button" data-value="2">2</button>
-        <button class="button" data-value="3">3</button>
-        <button class="button operator" data-value="+">+</button>
-
-        <button class="button zero" data-value="0">0</button>
-        <button class="button" data-value=".">.</button>
-        <button class="button equals" data-value="=">=</button>
+        <div class="history-panel">
+            <div class="history-header">
+                <div class="history-title">Calculation History</div>
+                <button class="clear-history" id="clearHistory">Clear</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="empty-history">No calculations yet</div>
+            </div>
+        </div>
     </div>
 
     <script>
-        const currentDisplay = document.getElementById('currentDisplay');
-        const historyDisplay = document.getElementById('historyDisplay');
-        const buttons = document.querySelectorAll('.button');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Calculator state
+            const calculator = {
+                currentOperand: '0',
+                previousOperand: '',
+                operation: undefined,
+                waitingForNewOperand: false
+            };
 
-        let currentInput = '0';
-        let previousInput = '';
-        let operator = null;
-        let waitingForSecondOperand = false;
+            // History array
+            let calculationHistory = JSON.parse(localStorage.getItem('calculatorHistory')) || [];
 
-        function updateDisplay() {
-            currentDisplay.textContent = currentInput;
-            historyDisplay.textContent = previousInput;
-            // Scroll to end if content overflows
-            currentDisplay.scrollLeft = currentDisplay.scrollWidth;
-            historyDisplay.scrollLeft = historyDisplay.scrollWidth;
-        }
+            // DOM elements
+            const currentOperandElement = document.getElementById('currentOperand');
+            const previousOperandElement = document.getElementById('previousOperand');
+            const themeToggle = document.getElementById('themeToggle');
+            const historyList = document.getElementById('historyList');
+            const clearHistoryButton = document.getElementById('clearHistory');
+            const voiceInputButton = document.getElementById('voiceInput');
+            const voiceStatus = document.getElementById('voiceStatus');
+            let isDarkTheme = false;
 
-        function clear() {
-            currentInput = '0';
-            previousInput = '';
-            operator = null;
-            waitingForSecondOperand = false;
-            updateDisplay();
-        }
+            // Speech recognition setup
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let recognition;
+            let isListening = false;
 
-        function appendNumber(number) {
-            if (waitingForSecondOperand) {
-                currentInput = number;
-                waitingForSecondOperand = false;
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                recognition.onstart = function() {
+                    isListening = true;
+                    voiceInputButton.classList.add('listening');
+                    voiceStatus.textContent = "Listening...";
+                    voiceStatus.classList.add('listening');
+                    playSound('start');
+                };
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript.toLowerCase();
+                    processVoiceCommand(transcript);
+                    playSound('success');
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error', event.error);
+                    voiceStatus.textContent = "Error: " + event.error;
+                    playSound('error');
+                    stopListening();
+                };
+
+                recognition.onend = function() {
+                    stopListening();
+                };
             } else {
-                currentInput = currentInput === '0' ? number : currentInput + number;
-            }
-            updateDisplay();
-        }
-
-        function appendDecimal() {
-            if (waitingForSecondOperand) {
-                currentInput = '0.';
-                waitingForSecondOperand = false;
-            } else if (!currentInput.includes('.')) {
-                currentInput += '.';
-            }
-            updateDisplay();
-        }
-
-        function handleOperator(nextOperator) {
-            const inputValue = parseFloat(currentInput);
-
-            if (operator && waitingForSecondOperand) {
-                operator = nextOperator;
-                previousInput = currentInput + ' ' + operator;
-                updateDisplay();
-                return;
+                voiceInputButton.disabled = true;
+                voiceInputButton.textContent = "Voice N/A";
+                voiceStatus.textContent = "Voice not supported";
             }
 
-            if (previousInput === '') {
-                previousInput = currentInput + ' ' + nextOperator;
-            } else if (operator) {
-                const prevValue = parseFloat(previousInput.split(' ')[0]);
-                let result;
-                switch (operator) {
-                    case '+': result = prevValue + inputValue; break;
-                    case '-': result = prevValue - inputValue; break;
-                    case '*': result = prevValue * inputValue; break;
-                    case '/': result = prevValue / inputValue; break;
-                    case '%': result = prevValue % inputValue; break;
-                    default: return;
+            function startListening() {
+                if (recognition && !isListening) {
+                    try {
+                        recognition.start();
+                    } catch (error) {
+                        console.error('Error starting speech recognition:', error);
+                    }
                 }
-                currentInput = String(result);
-                previousInput = currentInput + ' ' + nextOperator;
             }
 
-            operator = nextOperator;
-            waitingForSecondOperand = true;
-            updateDisplay();
-        }
-
-        function calculate() {
-            if (!operator || waitingForSecondOperand) return;
-
-            const secondOperand = parseFloat(currentInput);
-            const firstOperand = parseFloat(previousInput.split(' ')[0]);
-            let result;
-
-            switch (operator) {
-                case '+': result = firstOperand + secondOperand; break;
-                case '-': result = firstOperand - secondOperand; break;
-                case '*': result = firstOperand * secondOperand; break;
-                case '/': result = firstOperand / secondOperand; break;
-                case '%': result = firstOperand % secondOperand; break;
-                default: return;
+            function stopListening() {
+                isListening = false;
+                voiceInputButton.classList.remove('listening');
+                voiceStatus.textContent = "";
+                voiceStatus.classList.remove('listening');
             }
 
-            historyDisplay.textContent = previousInput.split(' ')[0] + ' ' + operator + ' ' + secondOperand + ' =';
-            currentInput = String(result);
-            previousInput = ''; // Clear history after equals
-            operator = null;
-            waitingForSecondOperand = false;
-            updateDisplay();
-        }
-
-        buttons.forEach(button => {
-            button.addEventListener('click', () => {
-                const value = button.dataset.value;
-
-                // Add a class for animation on click
-                button.classList.add('pressed');
-                button.addEventListener('animationend', () => {
-                    button.classList.remove('pressed');
-                }, { once: true });
-
-                if (value === 'clear') {
+            function processVoiceCommand(transcript) {
+                console.log("Voice command:", transcript);
+                
+                // Process common voice commands
+                if (transcript.includes('clear') || transcript.includes('reset')) {
                     clear();
-                } else if (value === '=') {
-                    calculate();
-                } else if (value === '.') {
-                    appendDecimal();
-                } else if (['+', '-', '*', '/', '%'].includes(value)) {
-                    handleOperator(value);
+                } else if (transcript.includes('delete') || transcript.includes('backspace')) {
+                    deleteLast();
+                } else if (transcript.includes('equals') || transcript.includes('equal') || 
+                          transcript.includes('calculate') || transcript.includes('result')) {
+                    compute();
                 } else {
-                    appendNumber(value);
+                    // Try to parse mathematical expressions
+                    const expression = transcript
+                        .replace(/plus/gi, '+')
+                        .replace(/minus/gi, '-')
+                        .replace(/subtract/gi, '-')
+                        .replace(/times/gi, '*')
+                        .replace(/multiplied by/gi, '*')
+                        .replace(/x/gi, '*')
+                        .replace(/divide/gi, '/')
+                        .replace(/divided by/gi, '/')
+                        .replace(/over/gi, '/')
+                        .replace(/point/gi, '.')
+                        .replace(/\. /g, '.')
+                        .replace(/ /g, '');
+                    
+                    try {
+                        // Try to evaluate the expression directly
+                        const result = eval(expression);
+                        if (!isNaN(result)) {
+                            calculator.currentOperand = result.toString();
+                            calculator.waitingForNewOperand = true;
+                            addToHistory(`${expression} =`, result.toString());
+                        }
+                    } catch (error) {
+                        console.error('Error evaluating voice expression:', error);
+                        voiceStatus.textContent = "Couldn't understand";
+                        setTimeout(() => {
+                            voiceStatus.textContent = "";
+                        }, 2000);
+                    }
                 }
-            });
-        });
+                
+                updateDisplay();
+            }
 
-        // Initialize display
-        updateDisplay();
+            // Sound effects
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            function playSound(type) {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                switch(type) {
+                    case 'click':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = 800;
+                        gainNode.gain.value = 0.1;
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + 0.1);
+                        break;
+                    case 'start':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = 600;
+                        gainNode.gain.value = 0.1;
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + 0.2);
+                        break;
+                    case 'success':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = 1000;
+                        gainNode.gain.value = 0.1;
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + 0.3);
+                        break;
+                    case 'error':
+                        oscillator.type = 'sawtooth';
+                        oscillator.frequency.value = 300;
+                        gainNode.gain.value = 0.1;
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + 0.5);
+                        break;
+                }
+            }
+
+            // Update display
+            function updateDisplay() {
+                currentOperandElement.textContent = calculator.currentOperand;
+                previousOperandElement.textContent = calculator.previousOperand;
+            }
+
+            // Append number
+            function appendNumber(number) {
+                if (calculator.waitingForNewOperand) {
+                    calculator.currentOperand = number;
+                    calculator.waitingForNewOperand = false;
+                } else {
+                    calculator.currentOperand = calculator.currentOperand === '0' ? 
+                        number : calculator.currentOperand + number;
+                }
+            }
+
+            // Append decimal point
+            function appendDecimal() {
+                if (calculator.waitingForNewOperand) {
+                    calculator.currentOperand = '0.';
+                    calculator.waitingForNewOperand = false;
+                    return;
+                }
+                
+                if (!calculator.currentOperand.includes('.')) {
+                    calculator.currentOperand += '.';
+                }
+            }
+
+            // Choose operation
+            function chooseOperation(nextOperation) {
+                const inputValue = parseFloat(calculator.currentOperand);
+                
+                if (calculator.previousOperand !== '' && !calculator.waitingForNewOperand) {
+                    compute();
+                }
+                
+                calculator.operation = nextOperation;
+                calculator.previousOperand = `${calculator.currentOperand} ${nextOperation}`;
+                calculator.waitingForNewOperand = true;
+            }
+
+            // Compute calculation
+            function compute() {
+                let computation;
+                const prev = parseFloat(calculator.previousOperand);
+                const current = parseFloat(calculator.currentOperand);
+                
+                if (isNaN(prev) || isNaN(current)) return;
+                
+                switch (calculator.operation) {
+                    case '+':
+                        computation = prev + current;
+                        break;
+                    case '−':
+                        computation = prev - current;
+                        break;
+                    case '×':
+                        computation = prev * current;
+                        break;
+                    case '÷':
+                        if (current === 0) {
+                            computation = 'Error';
+                        } else {
+                            computation = prev / current;
+                        }
+                        break;
+                    default:
+                        return;
+                }
+                
+                // Format the result
+                if (computation !== 'Error') {
+                    computation = parseFloat(computation.toFixed(10)).toString();
+                }
+                
+                // Add to history
+                addToHistory(`${calculator.previousOperand} ${calculator.currentOperand}`, computation);
+                
+                calculator.currentOperand = computation;
+                calculator.operation = undefined;
+                calculator.previousOperand = '';
+                calculator.waitingForNewOperand = true;
+                
+                // Add result animation
+                currentOperandElement.classList.add('result-animation');
+                setTimeout(() => {
+                    currentOperandElement.classList.remove('result-animation');
+                }, 500);
+            }
+
+            // Add calculation to history
+            function addToHistory(expression, result) {
+                const historyItem = {
+                    expression: expression,
+                    result: result,
+                    timestamp: new Date().toLocaleString()
+                };
+                
+                calculationHistory.unshift(historyItem);
+                
+                // Keep only last 20 calculations
+                if (calculationHistory.length > 20) {
+                    calculationHistory.pop();
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('calculatorHistory', JSON.stringify(calculationHistory));
+                
+                // Update history display
+                updateHistoryDisplay();
+            }
+
+            // Update history display
+            function updateHistoryDisplay() {
+                if (calculationHistory.length === 0) {
+                    historyList.innerHTML = '<div class="empty-history">No calculations yet</div>';
+                    return;
+                }
+                
+                historyList.innerHTML = '';
+                
+                calculationHistory.forEach(item => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item';
+                    
+                    historyItem.innerHTML = `
+                        <div class="history-expression">${item.expression} =</div>
+                        <div class="history-result">${item.result}</div>
+                    `;
+                    
+                    // Click to use this result
+                    historyItem.addEventListener('click', () => {
+                        calculator.currentOperand = item.result;
+                        calculator.waitingForNewOperand = true;
+                        updateDisplay();
+                        playSound('click');
+                    });
+                    
+                    historyList.appendChild(historyItem);
+                });
+            }
+
+            // Clear history
+            function clearHistory() {
+                calculationHistory = [];
+                localStorage.removeItem('calculatorHistory');
+                updateHistoryDisplay();
+                playSound('click');
+            }
+
+            // Clear calculator
+            function clear() {
+                calculator.currentOperand = '0';
+                calculator.previousOperand = '';
+                calculator.operation = undefined;
+                calculator.waitingForNewOperand = false;
+            }
+
+            // Delete last character
+            function deleteLast() {
+                if (calculator.waitingForNewOperand) return;
+                
+                if (calculator.currentOperand.length > 1) {
+                    calculator.currentOperand = calculator.currentOperand.slice(0, -1);
+                } else {
+                    calculator.currentOperand = '0';
+                }
+            }
+
+            // Create ripple effect
+            function createRipple(event) {
+                const button = event.currentTarget;
+                const circle = document.createElement('span');
+                const diameter = Math.max(button.clientWidth, button.clientHeight);
+                const radius = diameter / 2;
+                
+                circle.style.width = circle.style.height = `${diameter}px`;
+                circle.style.left = `${event.clientX - button.getBoundingClientRect().left - radius}px`;
+                circle.style.top = `${event.clientY - button.getBoundingClientRect().top - radius}px`;
+                circle.classList.add('ripple');
+                
+                const ripple = button.getElementsByClassName('ripple')[0];
+                if (ripple) {
+                    ripple.remove();
+                }
+                
+                button.appendChild(circle);
+            }
+
+            // Toggle theme
+            function toggleTheme() {
+                isDarkTheme = !isDarkTheme;
+                document.body.classList.toggle('dark-theme', isDarkTheme);
+                themeToggle.textContent = isDarkTheme ? '☀️' : '🌙';
+                
+                // Add animation to theme toggle
+                themeToggle.style.transform = 'rotate(180deg)';
+                setTimeout(() => {
+                    themeToggle.style.transform = 'rotate(0deg)';
+                }, 300);
+                
+                playSound('click');
+            }
+
+            // Handle button clicks
+            document.querySelectorAll('button').forEach(button => {
+                // Add ripple effect to all buttons except theme toggle
+                if (!button.classList.contains('theme-toggle') && !button.classList.contains('clear-history')) {
+                    button.addEventListener('click', createRipple);
+                }
+                
+                button.addEventListener('click', () => {
+                    // Play click sound
+                    if (!button.id.includes('voiceInput')) {
+                        playSound('click');
+                    }
+                    
+                    // Add 3D press animation
+                    button.style.transform = 'translateY(4px) scale(0.96)';
+                    setTimeout(() => {
+                        button.style.transform = '';
+                    }, 100);
+                    
+                    if (button.dataset.number) {
+                        appendNumber(button.dataset.number);
+                    } else if (button.dataset.action) {
+                        const action = button.dataset.action;
+                        
+                        switch (action) {
+                            case 'clear':
+                                clear();
+                                break;
+                            case 'delete':
+                                deleteLast();
+                                break;
+                            case 'decimal':
+                                appendDecimal();
+                                break;
+                            case 'equals':
+                                compute();
+                                break;
+                            case 'add':
+                            case 'subtract':
+                            case 'multiply':
+                            case 'divide':
+                                chooseOperation(
+                                    action === 'subtract' ? '−' : 
+                                    action === 'multiply' ? '×' : 
+                                    action === 'divide' ? '÷' : 
+                                    button.textContent
+                                );
+                                break;
+                        }
+                    }
+                    
+                    updateDisplay();
+                });
+            });
+
+            // Voice input button event
+            voiceInputButton.addEventListener('click', startListening);
+
+            // Theme toggle event
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // Clear history event
+            clearHistoryButton.addEventListener('click', clearHistory);
+
+            // Keyboard support
+            document.addEventListener('keydown', event => {
+                // Add visual feedback for keyboard input
+                const button = document.querySelector(`button[data-number="${event.key}"]`) ||
+                              document.querySelector(`button[data-action="${event.key}"]`) ||
+                              (event.key === 'Enter' && document.querySelector('[data-action="equals"]')) ||
+                              (event.key === '*' && document.querySelector('[data-action="multiply"]')) ||
+                              (event.key === '-' && document.querySelector('[data-action="subtract"]')) ||
+                              (event.key === '/' && document.querySelector('[data-action="divide"]'));
+                
+                if (button) {
+                    button.style.transform = 'translateY(4px) scale(0.96)';
+                    setTimeout(() => {
+                        button.style.transform = '';
+                    }, 100);
+                    playSound('click');
+                }
+                
+                if (event.key >= '0' && event.key <= '9') {
+                    appendNumber(event.key);
+                } else if (event.key === '.') {
+                    appendDecimal();
+                } else if (event.key === '+' || event.key === '-') {
+                    chooseOperation(event.key === '+' ? '+' : '−');
+                } else if (event.key === '*') {
+                    chooseOperation('×');
+                } else if (event.key === '/') {
+                    chooseOperation('÷');
+                } else if (event.key === 'Enter' || event.key === '=') {
+                    compute();
+                } else if (event.key === 'Escape' || event.key === 'Delete') {
+                    clear();
+                } else if (event.key === 'Backspace') {
+                    deleteLast();
+                } else if (event.key === 'v' && event.ctrlKey) {
+                    // Ctrl+V for voice input
+                    event.preventDefault();
+                    startListening();
+                }
+                
+                updateDisplay();
+            });
+
+            // Initialize display and history
+            updateDisplay();
+            updateHistoryDisplay();
+        });
     </script>
 </body>
 </html>
